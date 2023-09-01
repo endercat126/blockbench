@@ -324,7 +324,7 @@ function changeImageEditor(texture, from_settings) {
 				}
 			} else {
 				switch (id) {
-					case 'ps':  path = '~/.local/bin/aseprite'; break;
+					case 'ps':  path = '/usr/bin/aseprite'; break;
 					case 'gimp':path = '/usr/bin/gimp'; break;
 					case 'pdn': path = 'C:\\Program Files\\paint.net\\PaintDotNet.exe'; break;
 				}
