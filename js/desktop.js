@@ -308,7 +308,7 @@ function changeImageEditor(texture, from_settings) {
 		title: tl('message.image_editor.title'),
 		id: 'image_editor',
 		lines: ['<div class="dialog_bar"><select class="input_wide">'+
-				'<option id="ps">Photoshop</option>'+
+				'<option id="ps">Aseprite</option>'+
 				'<option id="gimp">Gimp</option>'+
 				(Blockbench.platform == 'win32' ? '<option id="pdn">Paint.NET</option>' : '')+
 				'<option id="other">'+tl('message.image_editor.file')+'</option>'+
@@ -324,7 +324,7 @@ function changeImageEditor(texture, from_settings) {
 				}
 			} else {
 				switch (id) {
-					case 'ps':  path = 'C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe'; break;
+					case 'ps':  path = '~/.local/bin/aseprite'; break;
 					case 'gimp':path = 'C:\\Program Files\\GIMP 2\\bin\\gimp-2.10.exe'; break;
 					case 'pdn': path = 'C:\\Program Files\\paint.net\\PaintDotNet.exe'; break;
 				}
