@@ -8,6 +8,8 @@ const exec = require('child_process').exec;
 const originalFs = require('original-fs');
 const https = require('https');
 const PathModule = require('path');
+const os = require('os');
+const path = require('path')
 
 const currentwindow = electron.getCurrentWindow();
 var dialog_win	 = null,
@@ -25,6 +27,28 @@ const recent_projects = (function() {
 	}
 	return array
 })();
+
+const LaunchSettings = {
+	path: path.join(app.getPath('userData'), 'launch_settings.json'),
+	settings: {},
+	get(key) {
+		return this.settings[key]
+	},
+	set(key, value) {
+		this.settings[key] = value;
+		let content = JSON.stringify(this.settings, null, '\t');
+		fs.writeFileSync(this.path, content);
+	},
+	load() {
+		try {
+			if (fs.existsSync(this.path)) {
+				let content = fs.readFileSync(this.path, 'utf-8');
+				this.settings = JSON.parse(content);
+			}
+		} catch (error) {}
+		return this;
+	}
+}.load();
 
 
 app.setAppUserModelId('blockbench')
@@ -59,17 +83,23 @@ function initializeDesktopApp() {
 
 	settings.interface_scale.onChange();
 
-	if (Blockbench.platform == 'darwin') {
-		//Placeholder
-		$('#mac_window_menu').show()
-		currentwindow.on('enter-full-screen', () => {
-			$('#mac_window_menu').hide()
-		})
-		currentwindow.on('leave-full-screen', () => {
-			$('#mac_window_menu').show()
-		})
+	if (LaunchSettings.get('native_window_frame') === true) {
+		console.log('native title bar, no window controls')
+		$('#header_free_bar').hide()
+		$('#corner_logo').hide()
 	} else {
-		$('#windows_window_menu').show()
+		if (Blockbench.platform == 'darwin') {
+			//Placeholder
+			$('#mac_window_menu').show()
+			currentwindow.on('enter-full-screen', () => {
+				$('#mac_window_menu').hide()
+			})
+			currentwindow.on('leave-full-screen', () => {
+				$('#mac_window_menu').show()
+			})
+		} else {
+			$('#windows_window_menu').show()
+		}
 	}
 }
 //Load Model
@@ -308,7 +338,8 @@ function changeImageEditor(texture, from_settings) {
 		title: tl('message.image_editor.title'),
 		id: 'image_editor',
 		lines: ['<div class="dialog_bar"><select class="input_wide">'+
-				'<option id="ps">Aseprite</option>'+
+				(Blockbench.platform == 'darwin' || Blockbench.platform == 'win32' ? '<option id="ps">Photoshop</option>' : '')+
+				'<option id="ase">Aseprite (Steam)</option>'+
 				'<option id="gimp">Gimp</option>'+
 				(Blockbench.platform == 'win32' ? '<option id="pdn">Paint.NET</option>' : '')+
 				'<option id="other">'+tl('message.image_editor.file')+'</option>'+
@@ -317,16 +348,23 @@ function changeImageEditor(texture, from_settings) {
 		onConfirm() {
 			var id = $('.dialog#image_editor option:selected').attr('id')
 			var path;
-			if (Blockbench.platform == 'darwin') {
+			if (Blockbench.platform == 'darwin') { // these locations might be wrong
 				switch (id) {
 					case 'ps':  path = '/Applications/Adobe Photoshop 2021/Adobe Photoshop 2021.app'; break;
 					case 'gimp':path = '/Applications/Gimp-2.10.app'; break;
+					case 'ase':path = os.homedir() + '/Library/Application Support/Steam/steamapps/common/Aseprite/aseprite.app'; break;
+				}
+			} else if (Blockbench.platform == 'win32') { // these locations might be wrong
+				switch (id) {
+					case 'ps':  path = 'C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe'; break;
+					case 'gimp':path = 'C:\\Program Files\\GIMP 2\\bin\\gimp-2.10.exe'; break;
+					case 'pdn': path = 'C:\\Program Files\\paint.net\\PaintDotNet.exe'; break;
+					case 'ase': path = 'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Aseprite\\aseprite.exe'; break;
 				}
 			} else {
 				switch (id) {
-					case 'ps':  path = '/usr/bin/aseprite'; break;
+					case 'ase':  path = os.homedir() + '/.local/share/Steam/steamapps/common/Aseprite/aseprite'; break;
 					case 'gimp':path = '/usr/bin/gimp'; break;
-					case 'pdn': path = 'C:\\Program Files\\paint.net\\PaintDotNet.exe'; break;
 				}
 			}
 			if (id === 'other') {
@@ -354,7 +392,7 @@ function changeImageEditor(texture, from_settings) {
 function selectImageEditorFile(texture) {
 	let filePaths = electron.dialog.showOpenDialogSync(currentwindow, {
 		title: tl('message.image_editor.exe'),
-		filters: [{name: 'Executable Program', extensions: ['exe', 'app', 'desktop', 'appimage']}]
+		filters: [{name: 'Executable Program', extensions: ['exe', 'app', 'desktop', 'appimage', 'x86_64', 'sh', 'py', '']}]
 	})
 	if (filePaths) {
 		settings.image_editor.value = filePaths[0]

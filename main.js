@@ -70,7 +70,7 @@ function createWindow(second_instance, options = {}) {
 	require('@electron/remote/main').enable(win.webContents)
 
 	var index_path = path.join(__dirname, 'index.html')
-	if (process.platform === 'darwin') {
+	if (process.platform !== 'win32') {
 
 		let template = [
 			{
